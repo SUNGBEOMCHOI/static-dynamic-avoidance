@@ -79,23 +79,42 @@ class CADRL(Policy):
     def set_epsilon(self, epsilon):
         self.epsilon = epsilon
 
-    def build_action_space(self, v_pref):
+    def build_action_space(self, v_pref, current_velocity):
         """
         Action space consists of 25 uniformly sampled actions in permitted range and 25 randomly sampled actions.
         """
         holonomic = True if self.kinematics == 'holonomic' else False
-        speeds = [(np.exp((i + 1) / self.speed_samples) - 1) / (np.e - 1) * v_pref for i in range(self.speed_samples)]
+        speeds = [current_velocity + (v_pref / 10) * (i - 2) for i in range(self.speed_samples)]
+
+        speed_zero = []
+        for i in range(len(speeds)):
+            if speeds[i] > v_pref:
+                speeds[i] = v_pref
+            elif speeds[i] <= 0:
+                speed_zero.append(i)
+        speedss = copy.deepcopy(speeds)
+        speeds = []
+        for kk in range(len(speedss)):
+            if kk in speed_zero:
+                continue
+            else:
+                speeds.append(speedss[kk])
+
         if holonomic:
             rotations = np.linspace(0, 2 * np.pi, self.rotation_samples, endpoint=False)
         else:
-            rotations = np.linspace(-np.pi / 4, np.pi / 4, self.rotation_samples)
+            rotations = np.linspace(-np.pi / 8, np.pi / 8, self.rotation_samples)
 
-        action_space = [ActionXY(0, 0) if holonomic else ActionRot(0, 0)]
+        action_space = []
         for rotation, speed in itertools.product(rotations, speeds):
             if holonomic:
                 action_space.append(ActionXY(speed * np.cos(rotation), speed * np.sin(rotation)))
             else:
                 action_space.append(ActionRot(speed, rotation))
+        try:
+            action_space.remove(ActionRot(0, 0))
+        except:
+            pass
 
         self.speeds = speeds
         self.rotations = rotations
@@ -143,8 +162,10 @@ class CADRL(Policy):
 
         if self.reach_destination(state):
             return ActionXY(0, 0) if self.kinematics == 'holonomic' else ActionRot(0, 0)
-        if self.action_space is None:
-            self.build_action_space(state.self_state.v_pref)
+
+        current_v = math.sqrt(state.self_state.vx ** 2 + state.self_state.vy ** 2)
+        # print(state.self_state.px, state.self_state.py)
+        self.build_action_space(state.self_state.v_pref, current_v)
 
         probability = np.random.random()
         if self.phase == 'train' and probability < self.epsilon:

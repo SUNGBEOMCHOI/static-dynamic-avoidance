@@ -1,10 +1,10 @@
 import torch
 import torch.nn as nn
 import logging
-from utils.action import ActionXY, ActionRot
+from static_avoidance.utils.action import ActionXY, ActionRot
 import itertools
 import numpy as np
-from utils.state import FullState, SmallState, ObstacleState
+from static_avoidance.utils.state import FullState, SmallState, ObstacleState
 import math
 import time
 import copy

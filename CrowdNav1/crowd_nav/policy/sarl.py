@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 from torch.nn.functional import softmax
 import logging
-from crowd_nav.policy.cadrl import mlp
-from crowd_nav.policy.multi_human_rl import MultiHumanRL
+from CrowdNav1.crowd_nav.policy.cadrl import mlp
+from CrowdNav1.crowd_nav.policy.multi_human_rl import MultiHumanRL
 
 
 class ValueNetwork(nn.Module):
